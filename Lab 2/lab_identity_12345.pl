@@ -5,5 +5,7 @@ find_identity(A) :-
 
 % This is a helper predicate and should find all the links for a particular actor
 % find_links_by_actor(+A,-L)
-find_links_by_actor(A,L) :-
-  true.
+find_links_by_actor(A,Ls) :-
+  wp(A, T),
+  findall(L, wt_link(T, L), Ls).
+  
