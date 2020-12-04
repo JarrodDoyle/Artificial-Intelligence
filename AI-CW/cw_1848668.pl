@@ -3,7 +3,9 @@ solve_task(Task,Cost) :-
     my_agent(A), get_agent_position(A,P),
     score_function(Task, P, 0, S),
     solve_task_bfs(Task, [S:P:[]],[],[P|Path]), !,
-    agent_do_moves(A,Path), length(Path,Cost).
+    length(Path,PotentialCost), get_agent_energy(A, Energy),
+    Energy >= PotentialCost,
+    agent_do_moves(A,Path), Cost is PotentialCost.
 
 % Calculate the path required to achieve a Task
 solve_task_bfs(Task, [_:Pos:RPath|Queue],Visited,Path) :-
@@ -22,6 +24,7 @@ solve_task_bfs(Task, [_:Pos:RPath|Queue],Visited,Path) :-
 
 % True if the Task is achieved with the agent at Pos
 achieved(Task,Pos) :- 
+    % TODO: map_adjacent calls can be reduced by calling only if the length of the path is >= manhattan distance
     Task=find(Obj), map_adjacent(Pos,_,Obj)
     ;
     Task=go(Pos).
