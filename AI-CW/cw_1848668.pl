@@ -1,16 +1,22 @@
-% Accomplish a given Task and return the Cost
+% Accomplish a given Task and return the energy Cost
 solve_task(Task,Cost) :-
     my_agent(A), get_agent_position(A,P),
+    get_agent_energy(A, Energy),
     score_function(Task, P, 0, S),
-    solve_task_bfs(Task, [S:P:[]],[],[P|Path]), !,
     (
-        length(Path,PotentialCost),
-        get_agent_energy(A, Energy),
-        Energy >= PotentialCost,
-        agent_do_moves(A,Path),
-        Cost is PotentialCost
+        % Assume a perfect path with manhattan distance. If the agent doesn' have enough
+        % energy for that then it definitely needs to attempt to top up.
+        Energy >= S,
+        solve_task_bfs(Task, [S:P:[]],[],[P|Path]), !,
+        length(Path,Cost),
+        % Do we have enough energy to perform this path?
+        % If not we need to attempt to top up!
+        Energy >= Cost,
+        agent_do_moves(A,Path)
         ;
-        say("Need to topup first", A),
+        % If we're here we need to try and top up, unless our current task is already
+        % to try and top up. In that case the agent is doomed to run out of energy and
+        % should just not move.
         Task \= find(c(N)),
         solve_task(find(c(N)), Cost1),
         Cost1 > 0,
@@ -41,6 +47,7 @@ achieved(Task,Pos) :-
     ;
     Task=go(Pos).
 
+% Score function for a given cell.
 score_function(Task, Pos, D, S) :-
     Task=find(_), S is D
     ;
