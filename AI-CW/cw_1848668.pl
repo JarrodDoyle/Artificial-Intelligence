@@ -3,9 +3,21 @@ solve_task(Task,Cost) :-
     my_agent(A), get_agent_position(A,P),
     score_function(Task, P, 0, S),
     solve_task_bfs(Task, [S:P:[]],[],[P|Path]), !,
-    length(Path,PotentialCost), get_agent_energy(A, Energy),
-    Energy >= PotentialCost,
-    agent_do_moves(A,Path), Cost is PotentialCost.
+    (
+        length(Path,PotentialCost),
+        get_agent_energy(A, Energy),
+        Energy >= PotentialCost,
+        agent_do_moves(A,Path),
+        Cost is PotentialCost
+        ;
+        say("Need to topup first", A),
+        Task \= find(c(N)),
+        solve_task(find(c(N)), Cost1),
+        Cost1 > 0,
+        agent_topup_energy(A, c(N)),
+        solve_task(Task, Cost2),
+        Cost is Cost1 + Cost2
+    ).
 
 % Calculate the path required to achieve a Task
 solve_task_bfs(Task, [_:Pos:RPath|Queue],Visited,Path) :-
