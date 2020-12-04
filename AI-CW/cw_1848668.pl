@@ -1,5 +1,12 @@
 % Accomplish a given Task and return the energy Cost
 solve_task(Task,Cost) :-
+    (
+        % Check validity of target position
+        Task = go(Pos),
+        lookup_pos(Pos, empty)
+        ;
+        Task = find(_)
+    ),
     my_agent(A), get_agent_position(A,P),
     get_agent_energy(A, Energy),
     score_function(Task, P, 0, S),
@@ -26,6 +33,11 @@ solve_task(Task,Cost) :-
     ).
 
 % Calculate the path required to achieve a Task
+solve_task_bfs(_, [], _, _) :-
+    % Base case to fail if no path can be found e.g. target is in an unconnected region
+    % TODO: Currently doesn't seem to work :)))
+    !, false.
+
 solve_task_bfs(Task, [_:Pos:RPath|Queue],Visited,Path) :-
     achieved(Task, Pos), reverse([Pos|RPath],Path)
     ;
