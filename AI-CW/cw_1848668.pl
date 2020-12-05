@@ -1,42 +1,36 @@
 % Accomplish a given Task and return the energy Cost
 solve_task(Task,Cost) :-
+    % Check target position is "empty" if required
     (
-        % Check validity of target position
         Task = go(Pos),
         lookup_pos(Pos, empty)
         ;
         Task = find(_)
     ),
-    my_agent(A), get_agent_position(A,P),
-    get_agent_energy(A, Energy),
-    score_function(Task, P, 0, S),
+
+    % Attempt to find a path, "solve_task_bfs" fails if no valid path exists
+    my_agent(A), get_agent_position(A, P),
+    solve_task_bfs(Task, [S:P:[]],[],[P|Path]), !,
+    length(Path, PathCost), get_agent_energy(A, Energy),
     (
-        % Assume a perfect path with manhattan distance. If the agent doesn' have enough
-        % energy for that then it definitely needs to attempt to top up.
-        Energy >= S,
-        solve_task_bfs(Task, [S:P:[]],[],[P|Path]), !,
-        length(Path,Cost),
-        % Do we have enough energy to perform this path?
-        % If not we need to attempt to top up!
-        Energy >= Cost,
-        agent_do_moves(A,Path)
+        % If we have enough energy, do the path
+        Energy >= PathCost,
+        agent_do_moves(A, Path),
+        Cost is PathCost
         ;
-        % If we're here we need to try and top up, unless our current task is already
-        % to try and top up. In that case the agent is doomed to run out of energy and
-        % should just not move.
-        Task \= find(c(N)),
-        solve_task(find(c(N)), Cost1),
-        Cost1 > 0,
-        agent_topup_energy(A, c(N)),
-        solve_task(Task, Cost2),
-        Cost is Cost1 + Cost2
+        % If we don't, top up then perform the task (unless you're already being tasked to top up)
+        Task \= find(c(_)),
+        solve_task(find(c(N)), TopUpCost), agent_topup_energy(A, c(N)), 
+        get_agent_energy(A, NewEnergy), get_agent_position(A, NewP),
+        solve_task_bfs(Task, [S:NewP:[]],[],[NewP|NewPath]), !,
+        length(NewPath, NewPathCost), NewEnergy >= NewPathCost,
+        agent_do_moves(A, NewPath),
+        Cost is TopUpCost + NewPathCost
     ).
 
-% Calculate the path required to achieve a Task
+% Calculate the path required to achieve a Task If no valid path exists then fail
 solve_task_bfs(_, [], _, _) :-
-    % Base case to fail if no path can be found e.g. target is in an unconnected region
-    % TODO: Currently doesn't seem to work :)))
-    !, false.
+    false.
 
 solve_task_bfs(Task, [_:Pos:RPath|Queue],Visited,Path) :-
     achieved(Task, Pos), reverse([Pos|RPath],Path)
