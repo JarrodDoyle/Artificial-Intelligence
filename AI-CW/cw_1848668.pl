@@ -20,7 +20,7 @@ solve_task(Task,Cost) :-
         ;
         % If we don't, top up then perform the task (unless you're already being tasked to top up)
         Task \= find(c(_)),
-        solve_task(find(c(N)), TopUpCost), agent_topup_energy(A, c(N)), 
+        solve_task(find(c(N)), TopUpCost), agent_topup_energy(A, c(N)),
         get_agent_energy(A, NewEnergy), get_agent_position(A, NewP),
         solve_task_bfs(Task, [S:NewP:[]],[],[NewP|NewPath]), !,
         length(NewPath, NewPathCost), NewEnergy >= NewPathCost,
@@ -38,7 +38,7 @@ solve_task_bfs(Task, [_:Pos:RPath|Queue],Visited,Path) :-
     findall(S:NewPos:[Pos|RPath], (
             map_adjacent(Pos,NewPos,empty),
             \+ member(NewPos,Visited),
-            \+ member(NewPos:_,Queue),
+            \+ member(_:NewPos:_,Queue),
             length([Pos|RPath], D),
             score_function(Task, NewPos, D, S)
     ),Children),
