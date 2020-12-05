@@ -25,7 +25,7 @@ solve_task(Task,Cost) :-
         solve_task_bfs(Task, [S:NewP:[]],[],[NewP|NewPath]), !,
         length(NewPath, NewPathCost), NewEnergy >= NewPathCost,
         agent_do_moves(A, NewPath),
-        Cost is TopUpCost + NewPathCost
+        Cost is TopUpCost + NewPathCost - (NewEnergy - (Energy - TopUpCost))
     ).
 
 % Calculate the path required to achieve a Task If no valid path exists then fail
