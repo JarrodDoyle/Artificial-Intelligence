@@ -7,11 +7,10 @@ eliminate(As,A) :-
     As=[A], !
     ;
     my_agent(Agent), get_agent_energy(Agent, Energy), ailp_grid_size(Size),
-    say(Energy, Agent),
     (
         Energy >= ((Size * Size) / 4) / 4
         ;
-        say("Need to topup real quick", Agent),
+        Energy > 0,
         get_agent_position(Agent, P1),
         solve_task_bfs(find(c(Station)), [_:P1:[]],[],[P1|Path]), !,
         agent_do_moves(Agent, Path), agent_topup_energy(Agent, c(Station))
