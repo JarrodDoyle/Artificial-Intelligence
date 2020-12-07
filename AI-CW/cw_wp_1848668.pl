@@ -6,13 +6,23 @@ actor_has_link(L,A) :-
 eliminate(As,A) :-
     As=[A], !
     ;
-    my_agent(N), get_agent_position(N, P),
-    findall(K, (
-        solve_task_bfs(find(o(K)), [_:P:[]], [], [P | Path]),
-        \+ agent_check_oracle(N, o(K)), !
-        ), [K | _]),
-    solve_task(find(o(K)),_),
-    agent_ask_oracle(N,o(K),link,L), 
+    my_agent(Agent), get_agent_energy(Agent, Energy), ailp_grid_size(Size),
+    say(Energy, Agent),
+    (
+        Energy >= ((Size * Size) / 4) / 4
+        ;
+        say("Need to topup real quick", Agent),
+        get_agent_position(Agent, P1),
+        solve_task_bfs(find(c(Station)), [_:P1:[]],[],[P1|Path]), !,
+        agent_do_moves(Agent, Path), agent_topup_energy(Agent, c(Station))
+    ),
+    get_agent_position(Agent, P),
+    findall(Oracle, (
+        solve_task_bfs(find(o(Oracle)), [_:P:[]], [], [P | _]),
+        \+ agent_check_oracle(Agent, o(Oracle)), !
+        ), [Oracle | _]),
+    solve_task(find(o(Oracle)),_),
+    agent_ask_oracle(Agent,o(Oracle),link,L), 
     include(actor_has_link(L),As,ViableAs), 
     eliminate(ViableAs,A).
 
