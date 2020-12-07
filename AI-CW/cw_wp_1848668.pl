@@ -18,12 +18,10 @@ eliminate(As,A) :-
         solve_task_bfs(find(c(Station)), [_:P1:[]],[],[P1|Path]), !,
         agent_do_moves(Agent, Path), agent_topup_energy(Agent, c(Station))
     ),
+    % Get the first valid (pathable and unquestioned) oracle
     get_agent_position(Agent, P),
-    % Gets the first valid (pathable and unquestioned) oracle
-    findall(Oracle, (
-        solve_task_bfs(find(o(Oracle)), [_:P:[]], [], [P | _]),
-        \+ agent_check_oracle(Agent, o(Oracle)), !
-        ), [Oracle | _]),
+    solve_task_bfs(find(o(Oracle)), [_:P:[]], [], [P | _]),
+    \+ agent_check_oracle(Agent, o(Oracle)), !,
     solve_task(find(o(Oracle)),_),
     agent_ask_oracle(Agent,o(Oracle),link,L), 
     include(actor_has_link(L),As,ViableAs), 
