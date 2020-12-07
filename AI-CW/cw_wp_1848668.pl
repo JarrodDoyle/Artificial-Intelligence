@@ -4,10 +4,13 @@ actor_has_link(L,A) :-
 
 % Attempt to solve by visiting each oracle in ID order
 eliminate(As,A) :-
+    % If there's only 1 actor/actress left it must be them
     As=[A], !
     ;
     my_agent(Agent), get_agent_energy(Agent, Energy), ailp_grid_size(Size),
     (
+        % Energy threshhold of 25% max. If the agent is below this they will attempt to
+        % top up first. If the agent has no energy just fail and return `unknown`.
         Energy >= ((Size * Size) / 4) / 4
         ;
         Energy > 0,
@@ -16,6 +19,7 @@ eliminate(As,A) :-
         agent_do_moves(Agent, Path), agent_topup_energy(Agent, c(Station))
     ),
     get_agent_position(Agent, P),
+    % Gets the first valid (pathable and unquestioned) oracle
     findall(Oracle, (
         solve_task_bfs(find(o(Oracle)), [_:P:[]], [], [P | _]),
         \+ agent_check_oracle(Agent, o(Oracle)), !

@@ -28,7 +28,7 @@ solve_task(Task,Cost) :-
         Cost is TopUpCost + NewPathCost - (NewEnergy - (Energy - TopUpCost))
     ).
 
-% Calculate the path required to achieve a Task If no valid path exists then fail
+% Attempt to calculate the path required to achieve a Task using a BFS with heuristic
 solve_task_bfs(_, [], _, _) :-
     false.
 
