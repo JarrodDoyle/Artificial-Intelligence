@@ -18,4 +18,6 @@ eliminate(As,A) :-
 
 % Deduce the identity of the secret actor A
 find_identity(A) :- 
-    findall(A,actor(A),As), eliminate(As,A).
+    findall(A,actor(A),As), eliminate(As,A)
+    ;
+    A = unknown.
