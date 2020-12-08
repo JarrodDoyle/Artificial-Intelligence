@@ -1,16 +1,24 @@
-% Solve the maze, aiming to get all the agents to p(N,N)
 solve_maze :-
-    my_agents(Agents),
-    find_moves(Agents,Moves),
-    agents_do_moves(Agents,Moves),
-    solve_maze.
-    
+    my_agents([A]),
+    get_agent_position(A, P),
+    solve_maze_single_agent(A, [P], [P]).
 
-%%%%%%%%%%%%%%%% USEFUL PREDICATES %%%%%%%%%%%%%%%%%%
-% Find a possible move for each agent
-find_moves([],[]).
-find_moves([A|As],[M|Moves]) :-
-    findall(P,agent_adjacent(A,P,_),PosMoves),
-    random_member(M,PosMoves),
-    find_moves(As,Moves).
+solve_maze_single_agent(A, Visited, [P|RPath]) :-
+    ailp_grid_size(N), P = p(N,N), leave_maze(A), !
+    ;
+    findall(NewP, (
+        agent_adjacent(A, NewP, OID),
+        OID \= t(_),
+        \+ member(NewP, Visited)
+    ), Ms),
+    (
+        random_member(M, Ms),
+        agents_do_moves([A], [M]),
+        solve_maze_single_agent(A, [M|Visited], [M,P|RPath])
+        ;
+        split_list(RPath, H, _),
+        agents_do_moves([A], [H]),
+        solve_maze_single_agent(A, Visited, RPath)
+    ).
 
+split_list([H|T], H, T).
