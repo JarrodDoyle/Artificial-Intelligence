@@ -27,6 +27,27 @@ find_moves([A|As], [V|Vs], [[_|RPath]|Ps], [V|NewVs], [RPath|NewPs]) :-
 find_moves([_|As], [V|Vs], [P|Ps], [V|NewVs], [P|NewPs]) :-
     find_moves(As, Vs, Ps, NewVs, NewPs).
 
+agent_at_end([], _) :-
+    false.
+
+agent_at_end([A|As], Exit) :-
+    get_agent_position(A, P),
+    P = Exit -> true ; agent_at_end(As, Exit).
+
+agents_leave_maze([], _).
+agents_leave_maze([A|As], Exit) :-
+    get_agent_position(A, P),
+    (P = Exit ->
+        say("At end!", A),
+        true
+        ;
+        say("Pathing to end!", A),
+        solve_task_bfs(go(Exit), [0:P:[]],[],[P|Path]), !,
+        agent_do_moves(A, Path)
+    ),
+    leave_maze(A),
+    agents_leave_maze(As, Exit).
+
 solve_maze :-
     my_agents(As),
     ailp_grid_size(N),
@@ -35,6 +56,8 @@ solve_maze :-
 
 solve_maze_multi_agent(As, Vs, Ps, Exit) :-
     find_moves(As, Vs, Ps, NewVs, NewPs),
-    % agents_do_moves(As, Moves),
-    % Check if any are at the end!!!"!"£!£$%!$
-    solve_maze_multi_agent(As, NewVs, NewPs, Exit).
+    (agent_at_end(As, Exit) ->
+        agents_leave_maze(As, Exit)
+        ;
+        solve_maze_multi_agent(As, NewVs, NewPs, Exit)
+    ).
