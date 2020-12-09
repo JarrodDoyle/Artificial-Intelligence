@@ -1,10 +1,7 @@
-split_list([H|T], H, T).
-
 build_Vs_and_Ps([], []).
 build_Vs_and_Ps([A|As], [[P]|Ps]) :-
     get_agent_position(A, P),
     build_Vs_and_Ps(As, Ps).
-
 
 find_moves([], [], [], [], []).
 find_moves([A|As], [V|Vs], [[P|RPath]|Ps], [NewV|NewVs], [NewP|NewPs]) :-
@@ -18,7 +15,7 @@ find_moves([A|As], [V|Vs], [[P|RPath]|Ps], [NewV|NewVs], [NewP|NewPs]) :-
         agent_do_moves(A, [M]),
         NewV = [M|V], NewP = [M,P|RPath]
         ;
-        split_list(RPath, M, _),
+        RPath = [M|_],
         lookup_pos(M, empty),
         agent_do_moves(A, [M]),
         NewV = V, NewP = RPath
