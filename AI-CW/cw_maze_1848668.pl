@@ -1,29 +1,33 @@
 build_agent_infos([], []).
-build_agent_infos([A|As], [[A, [P], [P]]|AgentInfos]) :-
+build_agent_infos([A|As], [[A, [P], [P], [P]]|AgentInfos]) :-
     get_agent_position(A, P),
     build_agent_infos(As, AgentInfos).
 
-find_moves([], []).
-find_moves([AgentInfo|As], [NewAgentInfo|NewAs]) :-
-    AgentInfo = [Agent, [Position|RPath], Visited],
-    findall(P, (
-        agent_adjacent(Agent, P, OID),
-        OID = empty,
-        \+ member(P, Visited)
-    ), PossibleMoves),
-    (
-        random_member(Move, PossibleMoves),
-        agent_do_moves(Agent, [Move]),
-        NewAgentInfo = [Agent, [Move, Position|RPath], [Move|Visited]]
+find_moves([], [], []).
+find_moves([AgentInfo|As], [NewAgentInfo|NewAs], [Move|Ms]) :-
+    AgentInfo = [Agent, [LastMove|PreviousMoves], [Position|RPath], Visited],
+    get_agent_position(Agent, TruePosition),
+    (Position = TruePosition ->
+        findall(P, (
+            agent_adjacent(Agent, P, OID),
+            OID = empty,
+            \+ member(P, Visited)
+        ), PossibleMoves),
+        (
+            random_member(Move, PossibleMoves),
+            NewAgentInfo = [Agent, [Move, LastMove|PreviousMoves], [Move, Position|RPath], [Move|Visited]]
+            ;
+            RPath = [Move|_],
+            NewAgentInfo = [Agent, [Move, LastMove|PreviousMoves], RPath, Visited]
+            ;
+            Move = LastMove,
+            NewAgentInfo = AgentInfo
+        )
         ;
-        RPath = [Move|_],
-        lookup_pos(Move, empty),
-        agent_do_moves(Agent, [Move]),
-        NewAgentInfo = [Agent, RPath, Visited]
-        ;
-        NewAgentInfo = [Agent, [Position|RPath], Visited]
+        Move = LastMove,
+        NewAgentInfo = AgentInfo
     ),
-    find_moves(As, NewAs).
+    find_moves(As, NewAs, Ms).
 
 agent_at_end([], _) :-
     false.
@@ -53,7 +57,9 @@ solve_maze :-
     solve_maze_multi_agent(As, AgentInfos, p(N,N)).
 
 solve_maze_multi_agent(As, AgentInfos, Exit) :-
-    find_moves(AgentInfos, NewAgentInfos),
+    find_moves(AgentInfos, NewAgentInfos, Moves),
+    writeln(Moves),
+    agents_do_moves(As, Moves),
     (agent_at_end(As, Exit) ->
         agents_leave_maze(As, Exit)
         ;
