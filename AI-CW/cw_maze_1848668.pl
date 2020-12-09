@@ -7,24 +7,24 @@ build_Vs_and_Ps([A|As], [[P]|Ps]) :-
 
 
 find_moves([], [], [], [], []).
-
-find_moves([A|As], [V|Vs], [[P|RPath]|Ps], [[M|V]|NewVs], [[M,P|RPath]|NewPs]) :-
+find_moves([A|As], [V|Vs], [[P|RPath]|Ps], [NewV|NewVs], [NewP|NewPs]) :-
     findall(X, (
         agent_adjacent(A, X, OID),
         OID = empty,
         \+ member(X, V)
     ), PosMs),
-    random_member(M, PosMs),
-    agent_do_moves(A, [M]),
-    find_moves(As, Vs, Ps, NewVs, NewPs).
-
-find_moves([A|As], [V|Vs], [[_|RPath]|Ps], [V|NewVs], [RPath|NewPs]) :-
-    split_list(RPath, M, _),
-    lookup_pos(M, empty),
-    agent_do_moves(A, [M]),
-    find_moves(As, Vs, Ps, NewVs, NewPs).
-
-find_moves([_|As], [V|Vs], [P|Ps], [V|NewVs], [P|NewPs]) :-
+    (
+        random_member(M, PosMs),
+        agent_do_moves(A, [M]),
+        NewV = [M|V], NewP = [M,P|RPath]
+        ;
+        split_list(RPath, M, _),
+        lookup_pos(M, empty),
+        agent_do_moves(A, [M]),
+        NewV = V, NewP = RPath
+        ;
+        NewV = V, NewP = [P|RPath]
+    ),
     find_moves(As, Vs, Ps, NewVs, NewPs).
 
 agent_at_end([], _) :-
