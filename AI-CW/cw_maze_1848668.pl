@@ -1,28 +1,29 @@
-build_Vs_and_Ps([], []).
-build_Vs_and_Ps([A|As], [[P]|Ps]) :-
+build_agent_infos([], []).
+build_agent_infos([A|As], [[A, [P], [P]]|AgentInfos]) :-
     get_agent_position(A, P),
-    build_Vs_and_Ps(As, Ps).
+    build_agent_infos(As, AgentInfos).
 
-find_moves([], [], [], [], []).
-find_moves([A|As], [V|Vs], [[P|RPath]|Ps], [NewV|NewVs], [NewP|NewPs]) :-
-    findall(X, (
-        agent_adjacent(A, X, OID),
+find_moves([], []).
+find_moves([AgentInfo|As], [NewAgentInfo|NewAs]) :-
+    AgentInfo = [Agent, [Position|RPath], Visited],
+    findall(P, (
+        agent_adjacent(Agent, P, OID),
         OID = empty,
-        \+ member(X, V)
-    ), PosMs),
+        \+ member(P, Visited)
+    ), PossibleMoves),
     (
-        random_member(M, PosMs),
-        agent_do_moves(A, [M]),
-        NewV = [M|V], NewP = [M,P|RPath]
+        random_member(Move, PossibleMoves),
+        agent_do_moves(Agent, [Move]),
+        NewAgentInfo = [Agent, [Move, Position|RPath], [Move|Visited]]
         ;
-        RPath = [M|_],
-        lookup_pos(M, empty),
-        agent_do_moves(A, [M]),
-        NewV = V, NewP = RPath
+        RPath = [Move|_],
+        lookup_pos(Move, empty),
+        agent_do_moves(Agent, [Move]),
+        NewAgentInfo = [Agent, RPath, Visited]
         ;
-        NewV = V, NewP = [P|RPath]
+        NewAgentInfo = [Agent, [Position|RPath], Visited]
     ),
-    find_moves(As, Vs, Ps, NewVs, NewPs).
+    find_moves(As, NewAs).
 
 agent_at_end([], _) :-
     false.
@@ -48,13 +49,13 @@ agents_leave_maze([A|As], Exit) :-
 solve_maze :-
     my_agents(As),
     ailp_grid_size(N),
-    build_Vs_and_Ps(As, VsAndPs),
-    solve_maze_multi_agent(As, VsAndPs, VsAndPs, p(N,N)).
+    build_agent_infos(As, AgentInfos),
+    solve_maze_multi_agent(As, AgentInfos, p(N,N)).
 
-solve_maze_multi_agent(As, Vs, Ps, Exit) :-
-    find_moves(As, Vs, Ps, NewVs, NewPs),
+solve_maze_multi_agent(As, AgentInfos, Exit) :-
+    find_moves(AgentInfos, NewAgentInfos),
     (agent_at_end(As, Exit) ->
         agents_leave_maze(As, Exit)
         ;
-        solve_maze_multi_agent(As, NewVs, NewPs, Exit)
+        solve_maze_multi_agent(As, NewAgentInfos, Exit)
     ).
