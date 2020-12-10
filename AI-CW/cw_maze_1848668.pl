@@ -6,10 +6,6 @@ build_agent_infos([A|As], [[A, Path, Path, Path]|AgentInfos]) :-
 
 find_moves([], _, [], [], []).
 find_moves([AgentInfo|As], DeadEnds, [NewAgentInfo|NewAs], NewDeadEnds, [Move|Ms]) :-
-    % Branches:
-    % - Fresh
-    %   - Deadend, Blocked by agent
-    % - Backtracking
     AgentInfo = [Agent, [LastMove|PreviousMoves], [Position|RPath], Visited],
     get_agent_position(Agent, TruePosition),
     (Position = TruePosition ->
@@ -56,21 +52,31 @@ agent_at_end([], _) :-
 
 agent_at_end([A|As], Exit) :-
     get_agent_position(A, P),
-    P = Exit -> true ; agent_at_end(As, Exit).
+    P = Exit -> leave_maze(A) ; agent_at_end(As, Exit).
 
-agents_leave_maze([], _).
-agents_leave_maze([A|As], Exit) :-
+get_exit_infos([], _, []).
+get_exit_infos([A|As], Exit, [[A, Path, [P]]|Infos]) :-
     get_agent_position(A, P),
-    (P = Exit ->
-        say("At end!", A),
-        true
+    solve_task_bfs(go(Exit), [0:P:[]],[],[P|Path]), !,
+    get_exit_infos(As, Exit, Infos).
+
+get_exit_moves([], [], []).
+get_exit_moves([[A, Path, [LastMove|PreviousMoves]]|As], [NewA|NewAs], [Move|Moves]) :-
+    get_agent_position(A, P),
+    (LastMove = P ->
+        Path = [Move|NewPath],
+        NewA = [A, NewPath, [Move,LastMove|PreviousMoves]]
         ;
-        say("Pathing to end!", A),
-        solve_task_bfs(go(Exit), [0:P:[]],[],[P|Path]), !,
-        agent_do_moves(A, Path)
+        Move = LastMove,
+        NewA = [A, Path, [LastMove|PreviousMoves]]
     ),
-    leave_maze(A),
-    agents_leave_maze(As, Exit).
+    get_exit_moves(As, NewAs, Moves).
+
+agents_leave_maze([], [], _).
+agents_leave_maze(As, Infos, Exit) :-
+    get_exit_moves(Infos, NewInfos, Moves),
+    agents_do_moves(As, Moves),
+    agents_leave_maze(As, NewInfos, Exit).
 
 solve_maze :-
     my_agents(As),
@@ -81,11 +87,11 @@ solve_maze :-
 solve_maze_multi_agent(As, DeadEnds, AgentInfos, Exit) :-
     find_moves(AgentInfos, DeadEnds, NewAgentInfos, ChildDeadEnds, Moves),
     append(DeadEnds, ChildDeadEnds, NewDeadEnds),
-    writeln(Moves),
-    % writeln(NewDeadEnds),
     agents_do_moves(As, Moves),
     (agent_at_end(As, Exit) ->
-        agents_leave_maze(As, Exit), !
+        my_agents(NewAs),
+        get_exit_infos(NewAs, Exit, Infos),
+        agents_leave_maze(NewAs, Infos, Exit), !
         ;
         solve_maze_multi_agent(As, NewDeadEnds, NewAgentInfos, Exit)
     ).
