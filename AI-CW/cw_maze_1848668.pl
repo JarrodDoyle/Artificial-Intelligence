@@ -36,7 +36,12 @@ find_moves([AgentInfo|As], DeadEnds, [NewAgentInfo|NewAs], NewDeadEnds, [Move|Ms
         % Retrying previous move
         % If the previous move is now a deadend, update agent info and don't try it again
         (member(LastMove, DeadEnds) ->
-            PreviousMoves = [Move|_], NewAgentInfo = [Agent, PreviousMoves, RPath, Visited]
+            PreviousMoves = [LastLastMove|_],
+            (member(LastLastMove, DeadEnds) ->
+                Move = LastMove, NewAgentInfo = AgentInfo
+                ;
+                PreviousMoves = [Move|_], NewAgentInfo = [Agent, PreviousMoves, RPath, Visited]
+            )
             ;
             Move = LastMove, NewAgentInfo = AgentInfo
         ),
