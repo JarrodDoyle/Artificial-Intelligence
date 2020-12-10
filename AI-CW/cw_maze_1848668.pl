@@ -1,7 +1,7 @@
 build_agent_infos([], []).
-build_agent_infos([A|As], [[A, [P], [P], Path]|AgentInfos]) :-
+build_agent_infos([A|As], [[A, Path, Path, Path]|AgentInfos]) :-
     get_agent_position(A, P),
-    solve_task_bfs(go(P), [0:p(1,1):[]],[],Path), !,
+    solve_task_bfs(go(p(1,1)), [0:P:[]],[],Path), !,
     build_agent_infos(As, AgentInfos).
 
 find_moves([], _, [], [], []).
