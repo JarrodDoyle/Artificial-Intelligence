@@ -36,7 +36,8 @@ solve_task_bfs(Task, [_:Pos:RPath|Queue],Visited,Path) :-
     achieved(Task, Pos), reverse([Pos|RPath],Path)
     ;
     findall(S:NewPos:[Pos|RPath], (
-            map_adjacent(Pos,NewPos,empty),
+            map_adjacent(Pos,NewPos,OID),
+            (OID = empty ; OID = a(_)),
             \+ member(NewPos,Visited),
             \+ member(_:NewPos:_,Queue),
             length([Pos|RPath], D),
