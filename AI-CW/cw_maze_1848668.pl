@@ -1,9 +1,11 @@
+% Builds initial starting "Info" for each agent [AgentID, [Moves], [RPath] [VisitedCells]]
 build_agent_infos([], []).
-build_agent_infos([A|As], [[A, Path, Path, Path]|AgentInfos]) :-
-    get_agent_position(A, P),
-    solve_task_bfs(go(p(1,1)), [0:P:[]],[],Path), !,
-    build_agent_infos(As, AgentInfos).
+build_agent_infos([Agent|Agents], [[Agent, Path, Path, Path]|AgentInfos]) :-
+    get_agent_position(Agent, Position),
+    solve_task_bfs(go(p(1,1)), [0:Position:[]],[],Path), !,
+    build_agent_infos(Agents, AgentInfos).
 
+% Finds a move for each agent
 find_moves([], _, [], [], []).
 find_moves([AgentInfo|As], DeadEnds, [NewAgentInfo|NewAs], NewDeadEnds, [Move|Ms]) :-
     AgentInfo = [Agent, [LastMove|PreviousMoves], [Position|RPath], Visited],
@@ -47,37 +49,40 @@ find_moves([AgentInfo|As], DeadEnds, [NewAgentInfo|NewAs], NewDeadEnds, [Move|Ms
         NewDeadEnds = ChildDeadEnds
     ).
 
-agent_at_end([], _) :-
-    false.
-
+% Checks if any agent is at the end. Fails if none are.
+% If an agent is at the end it leaves the maze and the predicate returns early.
 agent_at_end([A|As], Exit) :-
     get_agent_position(A, P),
     P = Exit -> leave_maze(A) ; agent_at_end(As, Exit).
 
+% Builds some "Agent Infos" in form [AgentID, PathToEnd, Moves]
 get_exit_infos([], _, []).
-get_exit_infos([A|As], Exit, [[A, Path, [P]]|Infos]) :-
-    get_agent_position(A, P),
-    solve_task_bfs(go(Exit), [0:P:[]],[],[P|Path]), !,
+get_exit_infos([Agent|As], Exit, [[Agent, Path, [Position]]|Infos]) :-
+    get_agent_position(Agent, Position),
+    solve_task_bfs(go(Exit), [0:Position:[]], [], [Position|Path]), !,
     get_exit_infos(As, Exit, Infos).
 
+% Get the move for each agent based on the passed in AgentInfos
 get_exit_moves([], [], []).
-get_exit_moves([[A, Path, [LastMove|PreviousMoves]]|As], [NewA|NewAs], [Move|Moves]) :-
-    get_agent_position(A, P),
-    (LastMove = P ->
+get_exit_moves([[Agent, Path, [LastMove|PreviousMoves]]|As], [NewA|NewAs], [Move|Moves]) :-
+    get_agent_position(Agent, Position),
+    (LastMove = Position ->
         Path = [Move|NewPath],
-        NewA = [A, NewPath, [Move,LastMove|PreviousMoves]]
+        NewA = [Agent, NewPath, [Move,LastMove|PreviousMoves]]
         ;
         Move = LastMove,
-        NewA = [A, Path, [LastMove|PreviousMoves]]
+        NewA = [Agent, Path, [LastMove|PreviousMoves]]
     ),
     get_exit_moves(As, NewAs, Moves).
 
+% Recursive function that paths each agent to the end of the maze and exits.
 agents_leave_maze([], [], _).
 agents_leave_maze(As, Infos, Exit) :-
     get_exit_moves(Infos, NewInfos, Moves),
     agents_do_moves(As, Moves),
     agents_leave_maze(As, NewInfos, Exit).
 
+% Main predicate to implement for Part 3
 solve_maze :-
     my_agents(As),
     ailp_grid_size(N),

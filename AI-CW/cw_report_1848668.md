@@ -10,6 +10,3 @@ My recharging solution is also simple. If an agents energy is less than 25% of i
 ## Part 3
 - Random intersections
 - Marking deadends
-
-
-# Extensions
